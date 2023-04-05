@@ -15,7 +15,7 @@ CREATE TABLE Aluno (
 GO
 
 CREATE TABLE Disciplina (
-    Codigo UNIQUEIDENTIFIER,
+    Codigo INT IDENTITY,
     Nome VARCHAR(30) NOT NULL,
     Carga_Horaria FLOAT NULL,
 
@@ -24,7 +24,7 @@ CREATE TABLE Disciplina (
 GO
 
 CREATE TABLE Matricula (
-    Id UNIQUEIDENTIFIER,
+    Id INT IDENTITY,
     RA_Aluno CHAR(13) NOT NULL,
     Ano INT NOT NULL,
     Semestre INT NOT NULL,
@@ -37,8 +37,8 @@ CREATE TABLE Matricula (
 GO
 
 CREATE TABLE Item_Matricula (
-    Id_Matricula UNIQUEIDENTIFIER,
-    Codigo_Disciplina UNIQUEIDENTIFIER,
+    Id_Matricula INT,
+    Codigo_Disciplina INT,
     Nota1 FLOAT NULL,
     Nota2 FLOAT NULL,
     Substitutiva FLOAT NULL,
@@ -53,7 +53,7 @@ GO
 -- Trigger
 CREATE OR ALTER TRIGGER TGR_Media_Insert ON Item_Matricula AFTER INSERT AS
     BEGIN
-        DECLARE @Update FLOAT, @Id UNIQUEIDENTIFIER, @Disc UNIQUEIDENTIFIER
+        DECLARE @Update FLOAT, @Id INT, @Disc INT
 
         SELECT @Id = Id_Matricula, @Disc = Codigo_Disciplina, @Update = CASE 
             WHEN Substitutiva IS NULL OR Substitutiva = 0 THEN (Nota1 + Nota2)/2
@@ -69,7 +69,7 @@ GO
 
 CREATE OR ALTER TRIGGER TGR_Media_Update ON Item_Matricula FOR UPDATE AS
     BEGIN
-        DECLARE @Update FLOAT, @Id UNIQUEIDENTIFIER, @Disc UNIQUEIDENTIFIER
+        DECLARE @Update FLOAT, @Id INT, @Disc INT
 
         SELECT @Id = Id_Matricula, @Disc = Codigo_Disciplina, @Update = CASE 
             WHEN Substitutiva IS NULL OR Substitutiva = 0 THEN (Nota1 + Nota2)/2
@@ -84,7 +84,7 @@ CREATE OR ALTER TRIGGER TGR_Media_Update ON Item_Matricula FOR UPDATE AS
 GO
 
 -- Procedures
-CREATE OR ALTER PROC InserirNota @Id UNIQUEIDENTIFIER, @Disc UNIQUEIDENTIFIER, @Nota1 FLOAT, @Nota2 FLOAT, @Sub FLOAT AS 
+CREATE OR ALTER PROC InserirNota @Id INT, @Disc INT, @Nota1 FLOAT, @Nota2 FLOAT, @Sub FLOAT AS 
     BEGIN
         INSERT INTO Item_Matricula (Id_Matricula, Codigo_Disciplina, Nota1, Nota2, Substitutiva) VALUES (@Id, @Disc, @Nota1, @Nota2, @Sub)
     END
@@ -92,15 +92,15 @@ GO
 
 CREATE OR ALTER PROC VerificarNota AS 
     BEGIN
-        SELECT Codigo_Disciplina, Nota1, Nota2, Substitutiva, Faltas, Media,
+        SELECT Codigo_Disciplina, Disciplina.Nome AS 'Nome Disciplina', Nota1, Nota2, Substitutiva, Faltas, Disciplina.Carga_Horaria, Media,
         CASE 
-            WHEN Media > 5 AND ((Disciplina.Carga_Horaria - Faltas)/Disciplina.Carga_Horaria) > 0.75 THEN 'Passou'
+            WHEN Media >= 5 AND ((Disciplina.Carga_Horaria - Faltas)/Disciplina.Carga_Horaria) > 0.50 THEN 'Passou'
             ELSE 'DP'
         END AS 'Status' FROM Item_Matricula JOIN Disciplina ON Item_Matricula.Codigo_Disciplina = Disciplina.Codigo
     END
 GO
 
-CREATE OR ALTER PROC AlterarNota @Id UNIQUEIDENTIFIER, @Disc UNIQUEIDENTIFIER, @Nota1 FLOAT, @Nota2 FLOAT, @Sub Float AS 
+CREATE OR ALTER PROC AlterarNota @Id INT, @Disc INT, @Nota1 FLOAT, @Nota2 FLOAT, @Sub Float AS 
     BEGIN
         UPDATE Item_Matricula SET Nota1 = @Nota1, Nota2 = @Nota2, Substitutiva = @Sub WHERE Id_Matricula = @Id AND Codigo_Disciplina = @Disc
     END
@@ -109,8 +109,8 @@ GO
 -- Insercoes
 /*
 INSERT INTO [Aluno] ([RA], [NOME], [CPF], [Status]) VALUES ('0120120113000', 'Jubileu', '12312312300', 'C')
-INSERT INTO [Disciplina] ([Codigo], [Nome], [Carga_Horaria]) VALUES (NEWID(), 'Natação', 20.7)
-INSERT INTO [Matricula] ([Id], [RA_Aluno], [Ano], [Semestre], [Status]) VALUES (NEWID(), '0120120113000', 2020, 1, 'C')
+INSERT INTO [Disciplina] ([Nome], [Carga_Horaria]) VALUES ('Natação', 100)
+INSERT INTO [Matricula] ([RA_Aluno], [Ano], [Semestre], [Status]) VALUES ('0120120113000', 2020, 1, 'C')
 */
 
 /*
@@ -121,14 +121,16 @@ SELECT * FROM Item_Matricula
 */
 
 /*
+DELETE Item_Matricula
 DELETE Matricula
 DELETE Aluno
 DELETE Disciplina
-DELETE Item_Matricula
 */
 
--- EXEC.InserirNota 'd981d0fa-4315-4e56-a755-a23931c66a4c', '10e95f55-cba7-421d-bf7f-60829498240d', 10, 10, 0
+-- EXEC.InserirNota 2, 2, 10, 10, 0
 
--- EXEC.AlterarNota 'd981d0fa-4315-4e56-a755-a23931c66a4c', '10e95f55-cba7-421d-bf7f-60829498240d', 8, 1, 5
+-- EXEC.AlterarNota 2, 2, 2, 8, 8
 
--- EXEC.VerificarNota
+--  UPDATE Item_Matricula SET Faltas = 49 WHERE Id_Matricula = 2 AND Codigo_Disciplina = 2
+
+EXEC.VerificarNota
