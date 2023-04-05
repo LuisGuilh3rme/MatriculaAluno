@@ -95,7 +95,8 @@ CREATE OR ALTER PROC VerificarNota AS
         SELECT Id_Matricula, Disciplina.Nome AS 'Nome Disciplina', Nota1, Nota2, Substitutiva, Faltas, Disciplina.Carga_Horaria, Media,
         CASE 
             WHEN Media >= 5 AND Faltas < (Disciplina.Carga_Horaria/2) THEN 'Passou'
-            ELSE 'DP'
+            WHEN Media IS NULL THEN 'Cursando'
+            ELSE 'Reprovado'
         END AS 'Status' FROM Item_Matricula JOIN Disciplina ON Item_Matricula.Codigo_Disciplina = Disciplina.Codigo
     END
 GO
@@ -108,9 +109,9 @@ GO
 
 -- Insercoes
 /*
-INSERT INTO [Aluno] ([RA], [NOME], [CPF], [Status]) VALUES ('0120120113000', 'Jubileu', '12312312300', 'C')
+INSERT INTO [Aluno] ([RA], [NOME], [CPF], [Status]) VALUES ('0120120113010', 'Tartaro', '12312312300', 'C')
 INSERT INTO [Disciplina] ([Nome], [Carga_Horaria]) VALUES ('Natação', 100)
-INSERT INTO [Matricula] ([RA_Aluno], [Ano], [Semestre], [Status]) VALUES ('0120120113000', 2020, 1, 'C')
+INSERT INTO [Matricula] ([RA_Aluno], [Ano], [Semestre], [Status]) VALUES ('0120120113010', 2022, 3, 'C')
 */
 
 /*
@@ -127,10 +128,10 @@ DELETE Aluno
 DELETE Disciplina
 */
 
--- EXEC.InserirNota 2, 2, 10, 10, 0
+-- EXEC.InserirNota 3, 2, 10, NULL, 0
 
 -- EXEC.AlterarNota 2, 2, 2, 8, 8
 
---  UPDATE Item_Matricula SET Faltas = 120 WHERE Id_Matricula = 2 AND Codigo_Disciplina = 2
+-- UPDATE Item_Matricula SET Faltas = 2 WHERE Id_Matricula = 3 AND Codigo_Disciplina = 2
 
 EXEC.VerificarNota
