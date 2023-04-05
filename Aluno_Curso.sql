@@ -94,9 +94,9 @@ CREATE OR ALTER PROC VerificarNota AS
     BEGIN
         SELECT Codigo_Disciplina, Nota1, Nota2, Substitutiva, Faltas, Media,
         CASE 
-            WHEN Media > 5 AND Faltas < 5 THEN 'Passou'
+            WHEN Media > 5 AND ((Disciplina.Carga_Horaria - Faltas)/Disciplina.Carga_Horaria) > 0.75 THEN 'Passou'
             ELSE 'DP'
-        END AS 'Status' FROM Item_Matricula
+        END AS 'Status' FROM Item_Matricula JOIN Disciplina ON Item_Matricula.Codigo_Disciplina = Disciplina.Codigo
     END
 GO
 
@@ -127,8 +127,8 @@ DELETE Disciplina
 DELETE Item_Matricula
 */
 
--- EXEC.InserirNota 'f7f28694-64fc-4e8e-bb9d-df21b5396a37', 'e5b53776-8944-4779-8bbb-aede08ebfb8c', 10, 10, 0
+-- EXEC.InserirNota 'd981d0fa-4315-4e56-a755-a23931c66a4c', '10e95f55-cba7-421d-bf7f-60829498240d', 10, 10, 0
 
--- EXEC.AlterarNota 'f7f28694-64fc-4e8e-bb9d-df21b5396a37', 'e5b53776-8944-4779-8bbb-aede08ebfb8c', 8, 8, 1
+-- EXEC.AlterarNota 'd981d0fa-4315-4e56-a755-a23931c66a4c', '10e95f55-cba7-421d-bf7f-60829498240d', 8, 1, 5
 
 -- EXEC.VerificarNota
