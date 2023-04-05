@@ -42,12 +42,45 @@ CREATE TABLE Item_Matricula (
     Nota1 FLOAT NULL,
     Nota2 FLOAT NULL,
     Substitutiva FLOAT NULL,
+    Media FLOAT NULL,
     Faltas INT NOT NULL DEFAULT (0),
     
     CONSTRAINT PK_Item_Matricula PRIMARY KEY (Id_Matricula, Codigo_Disciplina),
     CONSTRAINT FK_Item_Matricula_Matricula FOREIGN KEY (Id_Matricula) REFERENCES Matricula (Id),
     CONSTRAINT FK_Item_Matricula_Disciplina FOREIGN KEY (Codigo_Disciplina) REFERENCES Disciplina (Codigo)
 )
+GO
+-- Trigger
+CREATE OR ALTER TRIGGER TGR_Media_Insert ON Item_Matricula AFTER INSERT AS
+    BEGIN
+        DECLARE @Update FLOAT, @Id UNIQUEIDENTIFIER, @Disc UNIQUEIDENTIFIER
+
+        SELECT @Id = Id_Matricula, @Disc = Codigo_Disciplina, @Update = CASE 
+            WHEN Substitutiva IS NULL OR Substitutiva = 0 THEN (Nota1 + Nota2)/2
+            WHEN (Substitutiva > Nota1) AND (Nota1 < Nota2) THEN (Substitutiva + Nota2)/2
+            WHEN (Substitutiva > Nota2) AND (Nota2 < Nota1) THEN (Substitutiva + Nota1)/2
+            ELSE (Nota1 + Nota2)/2
+        END
+        FROM INSERTED
+
+        UPDATE Item_Matricula SET Media = @Update WHERE Id_Matricula = @Id AND Codigo_Disciplina = @Disc
+    END
+GO
+
+CREATE OR ALTER TRIGGER TGR_Media_Update ON Item_Matricula FOR UPDATE AS
+    BEGIN
+        DECLARE @Update FLOAT, @Id UNIQUEIDENTIFIER, @Disc UNIQUEIDENTIFIER
+
+        SELECT @Id = Id_Matricula, @Disc = Codigo_Disciplina, @Update = CASE 
+            WHEN Substitutiva IS NULL OR Substitutiva = 0 THEN (Nota1 + Nota2)/2
+            WHEN (Substitutiva > Nota1) AND (Nota1 < Nota2) THEN (Substitutiva + Nota2)/2
+            WHEN (Substitutiva > Nota2) AND (Nota2 < Nota1) THEN (Substitutiva + Nota1)/2
+            ELSE (Nota1 + Nota2)/2
+        END
+        FROM INSERTED
+
+        UPDATE Item_Matricula SET Media = @Update WHERE Id_Matricula = @Id AND Codigo_Disciplina = @Disc
+    END
 GO
 
 -- Procedures
@@ -57,20 +90,11 @@ CREATE OR ALTER PROC InserirNota @Id UNIQUEIDENTIFIER, @Disc UNIQUEIDENTIFIER, @
     END
 GO
 
-CREATE OR ALTER PROC VerificarNota @Id UNIQUEIDENTIFIER, @Disc UNIQUEIDENTIFIER AS 
+CREATE OR ALTER PROC VerificarNota AS 
     BEGIN
-    DECLARE @Update FLOAT
-
-    SELECT @Update = CASE 
-            WHEN Substitutiva IS NULL OR Substitutiva = 0 THEN (Nota1 + Nota2)/2
-            WHEN (Substitutiva > Nota1) AND (Nota1 < Nota2) THEN (Substitutiva + Nota2)/2
-            ELSE (Nota1 + Substitutiva)/2
-        END
-        FROM Item_Matricula WHERE Id_Matricula = @Id AND Codigo_Disciplina = @Disc
-
-        SELECT Codigo_Disciplina, Nota1, Nota2, Substitutiva, Faltas, @Update AS 'Media',
+        SELECT Codigo_Disciplina, Nota1, Nota2, Substitutiva, Faltas, Media,
         CASE 
-            WHEN @Update > 5 AND Faltas < 5 THEN 'Passou'
+            WHEN Media > 5 AND Faltas < 5 THEN 'Passou'
             ELSE 'DP'
         END AS 'Status' FROM Item_Matricula
     END
@@ -96,8 +120,15 @@ SELECT * FROM Disciplina
 SELECT * FROM Item_Matricula
 */
 
--- EXEC.InserirNota 'f2ec3f03-3bdc-4218-8aee-b3621d6ac159', '7871107c-67b6-453b-b875-c3d1f3d266d9', 10, 10, 0
+/*
+DELETE Matricula
+DELETE Aluno
+DELETE Disciplina
+DELETE Item_Matricula
+*/
 
--- EXEC.AlterarNota 'f2ec3f03-3bdc-4218-8aee-b3621d6ac159', '7871107c-67b6-453b-b875-c3d1f3d266d9', 8, 8, NULL
+-- EXEC.InserirNota 'f7f28694-64fc-4e8e-bb9d-df21b5396a37', 'e5b53776-8944-4779-8bbb-aede08ebfb8c', 10, 10, 0
 
--- EXEC.VerificarNota 'f2ec3f03-3bdc-4218-8aee-b3621d6ac159', '7871107c-67b6-453b-b875-c3d1f3d266d9'
+-- EXEC.AlterarNota 'f7f28694-64fc-4e8e-bb9d-df21b5396a37', 'e5b53776-8944-4779-8bbb-aede08ebfb8c', 8, 8, 1
+
+-- EXEC.VerificarNota
