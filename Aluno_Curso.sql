@@ -94,7 +94,7 @@ CREATE OR ALTER PROC VerificarNota AS
     BEGIN
         SELECT Codigo_Disciplina, Disciplina.Nome AS 'Nome Disciplina', Nota1, Nota2, Substitutiva, Faltas, Disciplina.Carga_Horaria, Media,
         CASE 
-            WHEN Media >= 5 AND ((Disciplina.Carga_Horaria - Faltas)/Disciplina.Carga_Horaria) > 0.50 THEN 'Passou'
+            WHEN Media >= 5 AND Faltas < (Disciplina.Carga_Horaria/2) THEN 'Passou'
             ELSE 'DP'
         END AS 'Status' FROM Item_Matricula JOIN Disciplina ON Item_Matricula.Codigo_Disciplina = Disciplina.Codigo
     END
@@ -131,6 +131,6 @@ DELETE Disciplina
 
 -- EXEC.AlterarNota 2, 2, 2, 8, 8
 
---  UPDATE Item_Matricula SET Faltas = 49 WHERE Id_Matricula = 2 AND Codigo_Disciplina = 2
+-- UPDATE Item_Matricula SET Faltas = 50 WHERE Id_Matricula = 2 AND Codigo_Disciplina = 2
 
 EXEC.VerificarNota
