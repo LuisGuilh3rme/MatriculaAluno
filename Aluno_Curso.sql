@@ -50,6 +50,7 @@ CREATE TABLE Item_Matricula (
     CONSTRAINT FK_Item_Matricula_Disciplina FOREIGN KEY (Codigo_Disciplina) REFERENCES Disciplina (Codigo)
 )
 GO
+
 -- Trigger
 CREATE OR ALTER TRIGGER TGR_Media_Insert ON Item_Matricula AFTER INSERT AS
     BEGIN
@@ -96,6 +97,7 @@ CREATE OR ALTER PROC VerificarNota AS
         CASE 
             WHEN Media >= 5 AND Faltas < (Disciplina.Carga_Horaria/2) THEN 'Passou'
             WHEN Media IS NULL THEN 'Cursando'
+            WHEN Faltas >= (Disciplina.Carga_Horaria/2) THEN 'Reprovado por falta'
             ELSE 'Reprovado'
         END AS 'Status' FROM Item_Matricula JOIN Disciplina ON Item_Matricula.Codigo_Disciplina = Disciplina.Codigo
     END
@@ -128,10 +130,9 @@ DELETE Aluno
 DELETE Disciplina
 */
 
--- EXEC.InserirNota 3, 2, 10, NULL, 0
+-- EXEC.InserirNota 1, 1, 8, NULL, 0
 
--- EXEC.AlterarNota 2, 2, 2, 8, 8
+-- EXEC.AlterarNota 2, 2, 8, 10, 0
 
--- UPDATE Item_Matricula SET Faltas = 2 WHERE Id_Matricula = 3 AND Codigo_Disciplina = 2
-
+-- UPDATE Item_Matricula SET Faltas = 2 WHERE Id_Matricula = 2 AND Codigo_Disciplina = 2
 EXEC.VerificarNota
